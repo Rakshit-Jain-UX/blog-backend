@@ -19,7 +19,7 @@
         onAuthStateChanged(auth, (loggedInUser) => {
             if (loggedInUser) {
                 user = { ...loggedInUser };
-                if (user.uid === "BUCiqfINDDcxUQRnwi6g2gD3Ww33") {
+                if (user.uid === "dVhA7usnYzZZzfmL0GoU3SIVRS22") {
                     // goto("/login");
                 } else {
                     goto("/not-allowed-user");
