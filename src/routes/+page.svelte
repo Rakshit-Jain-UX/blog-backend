@@ -1,30 +1,37 @@
 <script>
-    import { onMount } from "svelte";
-    import { app, getAuth, onAuthStateChanged } from "$lib/firebaseConfig";
-    import { goto } from "$app/navigation"; // Better navigation method
+  import { onMount } from "svelte";
+  import { account } from "$lib/appWriteConfig"; 
+  import { goto } from "$app/navigation";
 
-    let user = null;
+  let user = null;
+  let loading = true;
 
-    onMount(() => {
-        const auth = getAuth(app);
-        onAuthStateChanged(auth, (loggedInUser) => {
-            if (loggedInUser) {
-                user = { ...loggedInUser };
-                if (user.uid !== "BUCiqfINDDcxUQRnwi6g2gD3Ww33") {
-                    goto("/login");
-                } else {
-                    goto("/blog-form");
-                }
-            } else {
-                user = null;
-                goto("/login");
-            }
-        });
-    });
+  const ADMIN_UID = "683177c8001a717782c0";
+
+  onMount(async () => {
+    try {
+      const session = await account.get();
+      user = session;
+      loading = false;
+
+      if (user.$id === ADMIN_UID) {
+        setTimeout(() => {
+            goto("/blog-form");
+        }, 1000)
+      } else {
+        goto("/login");
+      }
+    } catch (err) {
+      loading = false;
+      goto("/login");
+    }
+  });
 </script>
 
-{#if user}
-    <p>Welcome, {user.email}!</p>
+{#if loading}
+  <p>Loading...</p>
+{:else if user}
+  <p>Welcome, {user.email}!</p>
 {:else}
-    <p>No user logged in.</p>
+  <p>No user logged in.</p>
 {/if}

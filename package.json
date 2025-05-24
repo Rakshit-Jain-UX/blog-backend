@@ -20,7 +20,8 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"firebase": "^11.3.1",
-		"quill": "^2.0.3"
+		"appwrite": "^14.0.1",
+		"quill": "^2.0.3",
+		"quill-delta-to-html": "^0.12.1"
 	}
 }

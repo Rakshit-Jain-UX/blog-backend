@@ -1,115 +1,107 @@
 <script>
-    import {
-        app,
-        getAuth,
-        signInWithEmailAndPassword,
-        sendPasswordResetEmail,
-        setPersistence,
-        browserLocalPersistence,
-    } from "$lib/firebaseConfig";
+    import { account, ID } from '$lib/appWriteConfig';
 
     let email, password;
-    const loginUser = async () => {
-        const auth = getAuth(app);
+    let isLoading = false;
+    let loggedInUser = null;
 
-        setPersistence(auth, browserLocalPersistence) // Ensures persistence across sessions
-            .then(() => {
-                return signInWithEmailAndPassword(
-                    auth,
-                    email.value,
-                    password.value,
-                );
-            })
-            .then((res) => {
-                alert("Login successful!");
+    async function loginUser() {
+        isLoading = true;
+        try {
+            await account.createEmailPasswordSession(email.value, password.value);
+            loggedInUser = await account.get();
+            alert("Login successful!");
+            window.location.replace("/");
+        } catch (err) {
+            alert(err.message || "Login failed");
+        } finally {
+            isLoading = false;
+        }
+    }
 
-                if (res.user.uid) {
-                    window.location.replace("/"); // Redirect to home
-                }
-            })
-            .catch((err) => {
-                alert(err.message);
-            });
-    };
+    async function registerUser() {
+        isLoading = true;
+        try {
+            await account.create(ID.unique(), email.value, password.value);
+            await loginUser(); // Automatically login after registration
+        } catch (err) {
+            alert(err.message || "Registration failed");
+        } finally {
+            isLoading = false;
+        }
+    }
 
-    const sendForgotPassword = async () => {
-        sendPasswordResetEmail(getAuth(app), email.value)
-            .then(() => {
-                alert("Password reset email sent");
-            })
-            .catch((err) => {
-                alert(err);
-            });
-    };
+    async function logoutUser() {
+        try {
+            await account.deleteSession("current");
+            loggedInUser = null;
+            alert("Logged out");
+        } catch (err) {
+            alert(err.message || "Logout failed");
+        }
+    }
 </script>
 
 <main>
     <section class="bg-gray-50 dark:bg-gray-900 h-dvh">
-        <div
-            class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0"
-        >
-            <div
-                class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700"
-            >
-                <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
-                    <h1
-                        class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white"
-                    >
-                        Sign in to your account
+        <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+            <div class="w-full bg-white rounded-lg shadow dark:border sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+                <div class="p-6 space-y-4 sm:p-8">
+                    <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+                        {loggedInUser ? `Welcome, ${loggedInUser.name || loggedInUser.email}` : 'Sign in or Register'}
                     </h1>
+
                     <div>
-                        <label
-                            for="email"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >Your email</label
-                        >
+                        <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your email</label>
                         <input
                             type="email"
                             name="email"
                             id="email"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="name@company.com"
-                            required=""
+                            required
                             bind:this={email}
+                            class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                         />
                     </div>
                     <div>
-                        <label
-                            for="password"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >Password</label
-                        >
+                        <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
                         <input
                             type="password"
                             name="password"
                             id="password"
                             placeholder="••••••••"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            required=""
+                            required
                             bind:this={password}
+                            class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                         />
                     </div>
-                    <div class="flex items-center justify-between">
+
+                    <div class="flex gap-2">
                         <button
-                            on:click={sendForgotPassword}
-                            class="text-sm font-medium text-blue-600 hover:underline dark:text-primary-500"
-                            >Forgot password?</button
+                            on:click={loginUser}
+                            class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700"
+                            disabled={isLoading}
                         >
+                            {isLoading ? 'Logging in...' : 'Login'}
+                        </button>
+
+                        <button
+                            on:click={registerUser}
+                            class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Registering...' : 'Register'}
+                        </button>
                     </div>
-                    <button
-                        on:click={loginUser}
-                        class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 cursor-pointer"
-                        >Sign in</button
-                    >
-                    <p
-                        class="text-sm font-light text-gray-500 dark:text-gray-400"
-                    >
-                        Don’t have an account yet? <a
-                            href="/register"
-                            class="font-medium text-primary-600 hover:underline dark:text-primary-500"
-                            >Sign up</a
+
+                    {#if loggedInUser}
+                        <button
+                            on:click={logoutUser}
+                            class="w-full mt-2 text-white bg-red-600 hover:bg-red-700 focus:ring-4 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700"
                         >
-                    </p>
+                            Logout
+                        </button>
+                    {/if}
                 </div>
             </div>
         </div>
