@@ -1,9 +1,5 @@
 <script>
-    import {
-        app,
-        getAuth,
-        createUserWithEmailAndPassword,
-    } from "$lib/firebaseConfig";
+    
     let email, password;
     const authUser = async () => {
         createUserWithEmailAndPassword(
