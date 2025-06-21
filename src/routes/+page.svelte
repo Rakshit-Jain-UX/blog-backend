@@ -5,7 +5,12 @@
 
   let user = null;
   let loading = true;
-
+  console.log(import.meta.env.VITE_PROJECT_ID)
+  console.log(import.meta.env.VITE_ENDPOINT)
+  console.log(import.meta.env.VITE_BUCKET_ID)
+  console.log(import.meta.env.VITE_DB_ID)
+  console.log(import.meta.env.VITE_COLLECTION_ID)
+  console.log(import.meta.env.VITE_ADMIN_ID)
   const ADMIN_UID = "683177c8001a717782c0";
 
   onMount(async () => {
